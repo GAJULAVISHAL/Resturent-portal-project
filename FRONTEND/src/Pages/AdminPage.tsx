@@ -1,8 +1,10 @@
+import { AppBar } from "../components/AppBar"
 
 export const AdminPage = () => {
     return (
         <div>
-            <h1>Admin</h1>
+            <AppBar/>
+            
         </div>
     )
 }
