@@ -1,46 +1,52 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
-import { redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/Authcontext';
 
-enum Role {
+export enum Role {
     ADMIN = "ADMIN",
     WAITER = "WAITER",
     KITCHEN = "KITCHEN"
 }
 
-export default function Login() {
+export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-
-    const NavigateToRoute = (role: Role) => {
-        switch (role) {
-            case Role.ADMIN:
-                redirect('/admin')
-                break;
-            case Role.WAITER:
-                redirect('/waiter')
-                break;
-            case Role.KITCHEN:
-                redirect('/kitchen')
-                break;
-            default:
-                redirect('/')
-                break;
-        }
-    }
+    const { setUserRole } = useAuth();
+    const navigate = useNavigate()
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         try {
             const response = await axios.post(`${BACKEND_URL}/api/v1/user/login`, { email, password });
-            const role = response.data.ROLE;
-            NavigateToRoute(role);
-            alert(`Logged in as ${role}`);
-        } catch (error) {
-            console.error(error);
+            if (response.status === 200) {
+                const userRole = response.data.ROLE as Role;
+                setUserRole(userRole);
+
+                switch (userRole) {
+                    case Role.ADMIN:
+                        navigate("/admin");
+                        break;
+                    case Role.WAITER:
+                        navigate("/waiter");
+                        break;
+                    case Role.KITCHEN:
+                        navigate("/kitchen");
+                        break;
+                    default:
+                        navigate("/login");
+                }
+            }
+            else {
+                alert("Incorrect Role");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Invalid credentials");
         }
-    };
+    }
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800">
             <div className="w-full max-w-md bg-gray-900 text-white p-8 rounded-xl shadow-2xl">
