@@ -8,7 +8,7 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children } : { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<Role | null>(null); // Initially, no role is set
 
   return (
