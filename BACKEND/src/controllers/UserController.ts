@@ -1,8 +1,9 @@
 import { Context } from "hono";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
-import { sign } from "hono/jwt";
+import { sign } from 'hono/jwt'
 import { hashSync,compare } from "bcryptjs"
+
 
 export async function Signup(c: Context){
     const prisma = new PrismaClient({
@@ -31,7 +32,12 @@ export async function Signup(c: Context){
             role : body.role
         }
     })
-    const token = await sign({name : res.name},c.env.SECRETKEY_JWT)
+    
+    const payload = {
+        name : res.name,
+        exp : Math.floor(Date.now() / 1000) + 60 * 60 * 24
+    }
+    const token = await sign(payload,c.env.SECRETKEY_JWT)
 
     return c.json({
         JWT : token,
@@ -63,8 +69,14 @@ export async function Login(c: Context){
         })
     }
 
-    const token = await sign({id : isUserExist.name},c.env.SECRETKEY_JWT)
+    const payload = {
+        name : isUserExist.name,
+        exp : Math.floor(Date.now() / 1000) + 60 * 60 * 24
+    }
+
+    const token = await sign(payload,c.env.SECRETKEY_JWT)
     const role = isUserExist.role
+
     return c.json({
         Message : 'Login Success',
         JWT : token,

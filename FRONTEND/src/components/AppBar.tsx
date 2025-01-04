@@ -1,4 +1,8 @@
+import { useAuth } from "../hooks/Authcontext";
+
 export const AppBar = () => {
+    const { logout } = useAuth();
+
     return (
         <nav className="bg-gray-800 text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,16 +27,18 @@ export const AppBar = () => {
                             Menu
                         </a>
                         <a
-                            href="#payments"
-                            className="hover:text-gray-300 transition duration-150"
-                        >
-                            Payments
-                        </a>
-                        <a
                             href="#settings"
                             className="hover:text-gray-300 transition duration-150"
                         >
                             Settings
+                        </a>
+                        <a
+                            href="http://localhost:5173/"
+                            className="hover:text-gray-300 transition duration-150"
+                            onClick={logout}
+
+                        >
+                            Logout
                         </a>
                     </div>
 

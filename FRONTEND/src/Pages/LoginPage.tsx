@@ -13,16 +13,19 @@ export enum Role {
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { setUserRole } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate()
 
-    const handleSubmit = async (e: FormEvent) => {
+    const Login = async (e: FormEvent) => {
         e.preventDefault();
         try {
             const response = await axios.post(`${BACKEND_URL}/api/v1/user/login`, { email, password });
             if (response.status === 200) {
                 const userRole = response.data.ROLE as Role;
-                setUserRole(userRole);
+                const token = response.data.JWT;
+                localStorage.setItem("role", userRole);
+                localStorage.setItem("token", token);
+                login(userRole);
 
                 switch (userRole) {
                     case Role.ADMIN:
@@ -54,7 +57,7 @@ export default function LoginPage() {
                 <p className="text-center text-gray-400 mb-6">
                     Enter your username and password to access the restaurant menu portal.
                 </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={Login} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1" htmlFor="email">
                             Username

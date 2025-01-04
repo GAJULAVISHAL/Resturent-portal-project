@@ -7,4 +7,4 @@ export const MenuRouter = new Hono();
 MenuRouter.post('/addItem',AuthMiddleware,AddItem);
 MenuRouter.put('/updateItem',AuthMiddleware,UpdateItem);
 MenuRouter.delete('/deleteItem',AuthMiddleware,DeleteItem);
-MenuRouter.get('/get',AuthMiddleware,GetMenu);
+MenuRouter.get('/get',GetMenu);

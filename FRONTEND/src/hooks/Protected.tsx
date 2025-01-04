@@ -7,11 +7,15 @@ interface ProtectedRouteProps{
     role: Role;
 }
 export const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {
-    const { userRole } = useAuth();
+    const { userRole , isAuthenticated} = useAuth();
 
-    if(userRole !== role){
+    if(isAuthenticated === false){
         return <Navigate to="/" />
     }
+
+    if(isAuthenticated && userRole !== role){
+        return <Navigate to="/unAuthorized" />
+    }       
     
     return (
         <div>
