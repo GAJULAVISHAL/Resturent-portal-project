@@ -13,7 +13,6 @@ export async function AddItem(c: Context) {
             data: {
                 name: body.name,
                 price: body.price,
-                description: body.description,
                 category: body.category,
             }
         })
@@ -22,6 +21,7 @@ export async function AddItem(c: Context) {
             data: res
         })
     } catch (e) {
+        console.log(e)
         return c.json({
             msg: 'Error adding item'
         })
@@ -42,7 +42,6 @@ export async function UpdateItem(c: Context) {
             data: {
                 name: body.name,
                 price: body.price,
-                description: body.description,
                 category: body.category,
             }
         })
@@ -91,7 +90,7 @@ export async function GetMenu(c: Context) {
                 id: true,
                 name: true,
                 price: true,
-                description: true,
+                category: true
             }
         })
         return c.json({

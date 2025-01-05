@@ -35,9 +35,10 @@ export const AuthProvider = ({ children } : { children: React.ReactNode }) => {
   const logout = () => {
     setUserRole(null);
     setIsAuthenticated(false);
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("userRole");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
   };
+
   if(loading){
     return <div>Loading...</div>
   }

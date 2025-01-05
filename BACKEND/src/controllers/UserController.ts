@@ -38,9 +38,11 @@ export async function Signup(c: Context){
         exp : Math.floor(Date.now() / 1000) + 60 * 60 * 24
     }
     const token = await sign(payload,c.env.SECRETKEY_JWT)
+    const role = await res.role
 
     return c.json({
         JWT : token,
+        ROLE : role
     })
 }
 

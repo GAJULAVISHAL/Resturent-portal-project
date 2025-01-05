@@ -26,9 +26,8 @@ model User {
 model MenuItem {
   id          Int       @id @default(autoincrement())
   name        String?
-  description String?
   price       Int
-  category    Category
+  category    Category  
   isAvailable Boolean    @default(true)
   createdAt   DateTime   @default(now())
   orderItems  OrderItem[] // One-to-many relationship with OrderItem
@@ -67,8 +66,14 @@ enum OrderStatus {
 }
 
 enum Category {
-  APPETIZER
-  MAIN_COURSE
-  DESSERT
-  BEVERAGE
+  JUICE
+  MILKSHAKE
+  SMOOTHIE
+  SALAD
+  SHARJAH
+  LASSI
+  MOJITO
+  FALOODA
+  CHAAT
+  FRIES
 }

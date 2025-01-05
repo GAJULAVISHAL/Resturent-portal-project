@@ -5,7 +5,7 @@ import { BACKEND_URL } from "../config"
 export interface item{
     id : number,
     name : string,
-    price : string,
+    price : number,
     category : string,
 }
 

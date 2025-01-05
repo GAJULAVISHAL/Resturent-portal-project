@@ -1,39 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { BACKEND_URL } from '../config';
-
-// Define types for the menu data
-interface MenuItem {
-  id?: number; // Assuming items have unique IDs
-  name: string;
-  description: string;
-  price: string;
-}
-
-interface MenuCategory {
-  category: string;
-  items: MenuItem[];
-}
-
-interface MenuData {
-  [key: string]: MenuCategory[];
-}
+import React, { useState } from 'react';
+import  { useItems } from '../hooks/Fetchitems'; 
+import { Items } from './Items'; 
 
 const AdminBody: React.FC = () => {
+  const { loading, items } = useItems();
+  const [activeTab, setActiveTab] = useState('All');
 
-  const [menuData, setMenuData] = useState<MenuData>({});
+  const filteredItems =
+    activeTab === 'All'
+      ? items
+      : items.filter((item) => item.category === activeTab);
 
-  // Fetch menu data from the backend
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  // Handle form input changes
-
-
-  // Add new item to the menu by making a POST request to the backend
-  
   return (
     <div className="bg-gray-900 text-white min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-6">Menu</h1>
-      
+      <div className="flex space-x-6 mb-6 border-b border-gray-700">
+        {['All', ...new Set(items.map((item) => item.category as string))].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-2 ${
+              activeTab === tab ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-400'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      {filteredItems.map((item) => (
+        <Items
+          key={item.id} // Ensure each item has a unique key
+          name={item.name}
+          price={item.price}
+        />
+      ))}
     </div>
   );
 };
