@@ -62,10 +62,10 @@ export async function DeleteItem(c: Context) {
             datasourceUrl: c.env.DATABASE_URL
         }).$extends(withAccelerate())
 
-        const body = await c.req.json()
+        const id = c.req.param("id")
         const res = await prisma.menuItem.delete({
             where: {
-                id: body.id
+                id: Number(id)
             }
         })
         return c.json({

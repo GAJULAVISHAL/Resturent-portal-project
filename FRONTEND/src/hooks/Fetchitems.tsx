@@ -1,6 +1,7 @@
 import axios from "axios"
 import { useEffect, useState } from "react"
 import { BACKEND_URL } from "../config"
+import { DeleteItem, handleSave } from "../components/AdminBody"
 
 export interface item{
     id : number,
@@ -24,7 +25,7 @@ export const useItems = () => {
             setItems(res.data.items)
             setLoading(false)
         })
-    },[])
+    },[handleSave,DeleteItem])
 
     return {loading, items}
 }
