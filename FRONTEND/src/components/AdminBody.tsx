@@ -13,7 +13,7 @@ export const handleSave = (id: number, name: string, price: number) => {
 }
 
 export const DeleteItem = (id : number)=>{
-  axios.delete(`${BACKEND_URL}/api/v1/menu/${id}`,{
+  axios.delete(`${BACKEND_URL}/api/v1/menu/deleteItem/${id}`,{
     headers :{
       Authorization : localStorage.getItem("token")
     }
