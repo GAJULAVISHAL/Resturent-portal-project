@@ -55,7 +55,6 @@ interface ItemProps {
         <div className="flex gap-5">
           {isEditing ? (
             <>
-            
               <button onClick={handleSave} className="text-green-500"><SaveIcon/></button>
               <button onClick={handleCancel} className="text-red-500"><CancelIcon/></button>
               <button onClick={handleDelete} className="text-red-500"><DeleteIcon/></button>
