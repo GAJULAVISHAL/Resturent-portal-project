@@ -14,24 +14,6 @@ export const AppBar = () => {
 
                     <div className="hidden md:flex space-x-6">
                         <a
-                            href="#dashboard"
-                            className="hover:text-gray-300 transition duration-150"
-                        >
-                            Dashboard
-                        </a>
-                        <a href="#orders" className="hover:text-gray-300 transition duration-150">
-                            Orders
-                        </a>
-                        <a href="#menu" className="hover:text-gray-300 transition duration-150">
-                            Menu
-                        </a>
-                        <a
-                            href="#settings"
-                            className="hover:text-gray-300 transition duration-150"
-                        >
-                            Settings
-                        </a>
-                        <a
                             href="http://localhost:5173/"
                             className="hover:text-gray-300 transition duration-150"
                             onClick={logout}

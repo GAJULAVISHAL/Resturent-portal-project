@@ -1,7 +1,13 @@
+import { AppBar } from "../components/AppBar"
+import { PlaceOrder } from "../components/PlaceOrder"
+import { WaiterBody } from "../components/WaiterBody"
+
 export const WaiterPage = () => {
     return (
-        <div>
-            <h1>Waiter</h1>
+        <div className="bg-gray-700 min-h-screen relative">
+            <AppBar/>
+            <WaiterBody/>
+            <PlaceOrder/>
         </div>
     )
 }

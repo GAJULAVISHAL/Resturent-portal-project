@@ -3,7 +3,7 @@ import { useItems } from '../hooks/Fetchitems';
 import { Items } from './Items';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
-import { Loading } from './Loading';
+import { AdminLoading } from './Loading';
 
 const AdminBody: React.FC = () => {
   const { loading, items } = useItems();
@@ -66,7 +66,7 @@ const AdminBody: React.FC = () => {
       ? items
       : items.filter((item) => item.category === activeTab);
   if (loading) {
-    return <div><Loading /></div>;
+    return <div><AdminLoading /></div>;
   }
 
 
