@@ -1,4 +1,4 @@
-name = "backend"
+name = "backend-res"
 main = "src/index.ts"
 compatibility_date = "2024-12-26"
 

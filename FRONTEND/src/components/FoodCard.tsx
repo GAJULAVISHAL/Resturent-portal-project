@@ -14,12 +14,12 @@ export const FoodCard = ({ title, price, onAdd, onSub }: {
     const [count, setCount] = useState<number>(0)
 
     const HandleAdd = ()=>{
-        onAdd(title, price)
+        onAdd({title, price})
         setCount(count + 1)
     }
 
     const HandleSub = ()=>{
-        onSub(title,price)
+        onSub({title,price})
         if(count > 0){
             setCount(count - 1)
         }
@@ -27,7 +27,7 @@ export const FoodCard = ({ title, price, onAdd, onSub }: {
 
     return (
         <div className="min-w-fit">
-            <div className="border rounded-lg shadow-md p-4 w-80 bg-white">
+            <div className="border rounded-lg shadow-md p-4 w-72 bg-white">
 
                 {/* Title */}
                 <h3 className="text-lg font-semibold mt-2">{title}</h3>
