@@ -85,3 +85,19 @@ export async function Login(c: Context){
         ROLE : role
     })
 }
+
+export async function GetUsers(c:Context){
+    const prisma = new PrismaClient({
+        datasourceUrl: c.env.DATABASE_URL
+    }).$extends(withAccelerate())
+    
+    const users = await prisma.user.findMany({
+        select:{
+            name : true,
+            role : true
+        }
+    })
+    return c.json({
+        Users : users
+    })
+}

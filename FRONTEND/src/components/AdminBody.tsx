@@ -4,15 +4,18 @@ import { Items } from './Items';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
 import { AdminLoading } from './Loading';
+import { AddImageIcon } from './Icons';
 
 const AdminBody: React.FC = () => {
   const { loading, items } = useItems();
   const [activeTab, setActiveTab] = useState('All');
   const [additem, setAdditem] = useState<boolean>(false)
+  const[imageUpload, setImageUpload] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     category: '',
-    price: 0
+    price: 0,
+    imageUrl : ""
   });
 
   const categories = [
@@ -28,8 +31,9 @@ const AdminBody: React.FC = () => {
     'FRIES'
   ];
 
+
   const handleSave = (id: number, name: string, price: number) => {
-    axios.put(`${BACKEND_URL}/api/v1/menu/updateItem`, { id, name, price }, {
+    axios.put(`${BACKEND_URL}/api/v1/menu/updateItem`, { id, name, price, }, {
       headers: {
         Authorization: localStorage.getItem('token')
       }
@@ -48,7 +52,8 @@ const AdminBody: React.FC = () => {
     setAdditem(true)
   }
 
-  const HandleSubmitItem = ()=>{
+  const HandleSubmitItem = () => {
+    console.log(formData);
     axios.post(`${BACKEND_URL}/api/v1/menu/addItem`, formData, {
       headers: {
         Authorization: localStorage.getItem("token") || ""
@@ -59,6 +64,29 @@ const AdminBody: React.FC = () => {
 
   const HandleCanceItem = () => {
     setAdditem(false)
+  }
+
+  const HandleUploadImage = async(e : any)=>{
+    const file = e.target.files[0]
+    
+    if(!file) return
+    setImageUpload(true)
+    const data = new FormData()
+    data.append('file', file)
+    data.append('upload_preset', 'ml_default')
+    data.append('cloud_name', 'duqbf6np3')
+
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/duqbf6np3/image/upload`,
+      data
+    );
+    const url = response.data.url;
+    console.log(url);
+    setFormData(prevState => ({
+      ...prevState,
+      imageUrl: url
+    }));
+    setImageUpload(false)
   }
 
   const filteredItems =
@@ -93,7 +121,7 @@ const AdminBody: React.FC = () => {
       {
         additem && (<div className="fixed inset-0 flex justify-center items-center z-50">
           <div className="w-full max-w-md mx-auto p-6 bg-gray-700 text-black rounded-lg shadow-md">
-            <form onSubmit={HandleSubmitItem} onReset={HandleCanceItem} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="name" className="block text-sm font-medium text-white">
                   Item Name
@@ -160,23 +188,42 @@ const AdminBody: React.FC = () => {
                   required
                 />
               </div>
+              <div className='space-y-2'>
+                <label htmlFor="price" className="block text-sm font-medium text-white">
+                  Upload Image
+                </label>
+                <div className="w-full px-3 py-2 bg-black rounded-md shadow-sm flex flex-col justify-center items-center" >
+                  {
+                    imageUpload ? (<div className='text-white'>Uploading...</div>) : <AddImageIcon />
+                  }
+                  <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept='image/*'
+                    onChange={HandleUploadImage}
+                    className="text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 "
+                    required
+                  />
+                </div>
+              </div>
 
               <div className='flex gap-2'>
                 <button
-                  type="submit"
+                  onClick={HandleSubmitItem}
                   className="w-full bg-gray-700 border border-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   Save Item
                 </button>
 
                 <button
-                  type="reset"
+                  onClick={HandleCanceItem}
                   className="w-full bg-gray-700 border border-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>)
       }

@@ -14,6 +14,7 @@ export async function AddItem(c: Context) {
                 name: body.name,
                 price: body.price,
                 category: body.category,
+                imageUrl : body.imageUrl
             }
         })
         return c.json({
@@ -71,11 +72,12 @@ export async function DeleteItem(c: Context) {
         return c.json({
             msg: 'Item deleted successfully',
             data: res
-        })
+        },200)
     } catch (e) {
+        console.log(e)
         return c.json({
             msg: 'Error deleting item'
-        })
+        },400)
     }
 }
 
@@ -90,7 +92,8 @@ export async function GetMenu(c: Context) {
                 id: true,
                 name: true,
                 price: true,
-                category: true
+                category: true,
+                imageUrl: true
             }
         })
         return c.json({

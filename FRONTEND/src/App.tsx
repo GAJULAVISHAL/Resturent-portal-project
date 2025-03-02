@@ -6,16 +6,20 @@ import { Role } from "./Pages/LoginPage"
 import { ProtectedRoute } from "./hooks/Protected"
 import { KitchenPage } from "./Pages/KitchenPage"
 import { AuthProvider } from "./hooks/Authcontext"
+import {LandingPage} from "./Pages/LandingPage"
+import { SignupPage } from "./Pages/SignupPage"
+// import { Workers } from "./components/Workers"
 
 function App() {
 
   return (
     <>
       <AuthProvider>
-
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
+            <Route path="/" element={<LandingPage/>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route
               path="/admin"
               element={
@@ -24,6 +28,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* <Route
+              path="/admin/Workers"
+              element={
+                <ProtectedRoute role={Role.ADMIN}>
+                  <Workers />
+                </ProtectedRoute>
+              }
+            /> */}
             <Route
               path="/waiter"
               element={
@@ -42,7 +54,7 @@ function App() {
             />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
+      </AuthProvider >
     </>
   )
 }

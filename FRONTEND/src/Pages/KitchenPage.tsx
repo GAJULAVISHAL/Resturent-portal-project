@@ -1,7 +1,11 @@
+import { AppBar } from "../components/AppBar"
+import { KitchenBody } from "../components/KitchenBody"
+
 export const KitchenPage = () => {
     return (
-        <div>
-            <h1>KitchenPage</h1>
+        <div className="bg-gray-700 min-h-screen relative">
+            <AppBar/>
+            <KitchenBody/>
         </div>
     )
 }

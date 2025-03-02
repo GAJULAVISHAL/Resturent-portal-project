@@ -7,6 +7,7 @@ export interface item{
     name : string,
     price : number,
     category : string,
+    imageUrl : string
 }
 
 export const useItems = () => {

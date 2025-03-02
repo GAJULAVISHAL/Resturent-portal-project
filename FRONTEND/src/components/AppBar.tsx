@@ -1,6 +1,8 @@
 import { useAuth } from "../hooks/Authcontext";
+// import { useNavigate } from "react-router-dom";
 
 export const AppBar = () => {
+    // const navigate = useNavigate()
     const { logout } = useAuth();
 
     return (
@@ -12,15 +14,28 @@ export const AppBar = () => {
                         <span className="text-xl font-bold">Delish</span>
                     </div>
 
-                    <div className="hidden md:flex space-x-6">
-                        <a
-                            href="http://localhost:5173/"
-                            className="hover:text-gray-300 transition duration-150"
-                            onClick={logout}
+                    <div className="flex items-center gap-4">
+                        {/* <div className="hidden md:flex space-x-6">
+                            <a
+                                href="http://localhost:5173/admin/Workers"
+                                className="hover:text-gray-300 transition duration-150"
+                                onClick={() => navigate('/admin/Workers')}
 
-                        >
-                            Logout
-                        </a>
+                            >
+                                Workes
+                            </a>
+                        </div> */}
+
+                        <div className="hidden md:flex space-x-6">
+                            <a
+                                href="http://localhost:5173/"
+                                className="hover:text-gray-300 transition duration-150"
+                                onClick={logout}
+
+                            >
+                                Logout
+                            </a>
+                        </div>
                     </div>
 
                     <div className="md:hidden">

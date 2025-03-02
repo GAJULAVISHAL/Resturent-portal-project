@@ -27,6 +27,7 @@ model MenuItem {
   id          Int       @id @default(autoincrement())
   name        String?
   price       Int
+  imageUrl    String?
   category    Category  
   isAvailable Boolean    @default(true)
   createdAt   DateTime   @default(now())

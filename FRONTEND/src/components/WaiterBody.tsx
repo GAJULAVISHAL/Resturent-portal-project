@@ -19,7 +19,8 @@ export const WaiterBody = () => {
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [orderStatus, setOrderStatus] = useState<string>("")
   const [tableNumber, setTabelNumber] = useState<number>(0)
-
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  
   const categories = [
     '1',
     '2',
@@ -27,6 +28,26 @@ export const WaiterBody = () => {
     '4',
     '5',
   ]
+
+  useEffect(() => {
+    const newSocket = new WebSocket('ws://localhost:8080');
+    newSocket.onopen = () => {
+      console.log('Connection established');
+      setSocket(newSocket)
+    }
+    newSocket.onmessage = (message) => {
+      console.log('Message received:', message.data);
+    }
+
+  }, [])
+   
+  if(!socket){
+    return(
+      <div>
+        loading ....
+      </div>
+    )
+  }
 
   const HandleAddItem = (item: Item) => {
     setSelectedItems((prevItems) => {
@@ -66,7 +87,6 @@ export const WaiterBody = () => {
 
   const HandleOrder = async () => {
     if (!tableNumber || selectedItems.length === 0) {
-      5
       setOrderStatus("Please select items and provide a table number.");
       return;
     }
@@ -85,6 +105,8 @@ export const WaiterBody = () => {
       })
 
       setOrderStatus("Order placed successfully!");
+      console.log(selectedItems)
+      socket.send(JSON.stringify({tableNumber,items : selectedItems,totalPrice,}))
       console.log("Order response:", res.data);
     } catch (e) {
       console.error("Error placing order:", e);
@@ -96,13 +118,14 @@ export const WaiterBody = () => {
     setSelectedItems([])
     setTotalPrice(0)
     setTabelNumber(0)
+    setOrderStatus("")
   }
 
-  useEffect(() => {
-    console.log(`Updated Total Price: ₹${totalPrice}`);
-    console.log("Updated Selected Items:", selectedItems);
-    console.log(tableNumber)
-  }, [totalPrice, selectedItems, tableNumber]);
+  // useEffect(() => {
+  //   console.log(`Updated Total Price: ₹${totalPrice}`);
+  //   console.log("Updated Selected Items:", selectedItems);
+  //   console.log(tableNumber)
+  // }, [totalPrice, selectedItems, tableNumber]);
 
   const filteredItems = searchQuery
     ? items.filter((item) =>
@@ -141,6 +164,7 @@ export const WaiterBody = () => {
                     key={item.name}
                     title={item.name}
                     price={item.price}
+                    imageUrl={item.imageUrl}
                     onAdd={() => HandleAddItem({ ...item, quantity: 1 })}
                     onSub={() => HandleSubItem({ ...item, quantity: 1 })}
                   />

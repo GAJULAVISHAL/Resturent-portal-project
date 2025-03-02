@@ -1,17 +1,30 @@
 import { useState } from "react"
+import { Cloudinary } from '@cloudinary/url-gen';
+import { auto } from '@cloudinary/url-gen/actions/resize';
+import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
+import { AdvancedImage } from '@cloudinary/react';
 
 interface Item {
     title : string
     price : number
 }
-export const FoodCard = ({ title, price, onAdd, onSub }: {
+export const FoodCard = ({ title, price, imageUrl, onAdd, onSub }: {
     title: string,
     price: number,
+    imageUrl: string,
     onAdd: (item : Item ) => void,
     onSub: (item : Item) => void
 }) => {
 
     const [count, setCount] = useState<number>(0)
+
+    const cld = new Cloudinary({ cloud: { cloudName: 'duqbf6np3' } });
+  
+    const img = cld
+      .image(imageUrl)
+      .format('auto')
+      .quality('auto')
+      .resize(auto().gravity(autoGravity()).width(500).height(500));
 
     const HandleAdd = ()=>{
         onAdd({title, price})
@@ -35,14 +48,15 @@ export const FoodCard = ({ title, price, onAdd, onSub }: {
                 {/* Price */}
                 <div className="text-lg font-bold mt-2">₹{price}</div>
 
-                {/* Image
                 <div className="mt-4 relative">
-                    <img
-                        src="https://via.placeholder.com/150"
-                        alt="Chicken Biryani"
+                    <AdvancedImage
+                        cldImg={img}
+                        alt={title}
                         className="rounded-lg w-full"
+                        
                     />
-                </div> */}
+
+                </div>
 
                 {/* Add Button */}
                 <div className="flex bg-red-500 items-center mt-4">
