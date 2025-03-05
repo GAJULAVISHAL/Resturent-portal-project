@@ -27,5 +27,5 @@ export const useItems = () => {
         })
     },[])
 
-    return {loading, items}
+    return {loading, items, setItems}
 }

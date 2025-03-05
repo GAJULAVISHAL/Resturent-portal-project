@@ -1,13 +1,25 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
+import axios from 'axios';
+import { BACKEND_URL } from '../config';
+import { useAuth } from '../hooks/Authcontext';
+import { useNavigate } from 'react-router-dom';
+
+export enum Role {
+  ADMIN = "ADMIN",
+  WAITER = "WAITER",
+  KITCHEN = "KITCHEN"
+}
 
 export const SignupPage = () => {
+  const { login } = useAuth()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     role: 'user' // Default role
   });
 
-  const handleChange = (e : React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -15,10 +27,38 @@ export const SignupPage = () => {
     });
   };
 
-  const handleSubmit = (e : React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Here you would typically send the data to your API
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/v1/user/signup`, formData)
+      if (response.status == 200) {
+        const userRole = response.data.ROLE as Role;
+        const token = response.data.JWT;
+        localStorage.setItem(" ", userRole);
+        localStorage.setItem("token", token);
+        login(userRole);
+
+        switch (userRole) {
+          case Role.ADMIN:
+            navigate("/admin");
+            break;
+          case Role.WAITER:
+            navigate("/waiter");
+            break;
+          case Role.KITCHEN:
+            navigate("/kitchen");
+            break;
+          default:
+            navigate("/login");
+        }
+      }else{
+        alert("Incorrect Role")
+      }
+    }catch(err){
+      console.error(err)
+      alert("invalid Details")
+    }
+
   };
 
   return (
@@ -30,7 +70,7 @@ export const SignupPage = () => {
             Create an account to access the restaurant menu portal.
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-white mb-2">
@@ -47,7 +87,7 @@ export const SignupPage = () => {
               required
             />
           </div>
-          
+
           <div>
             <label htmlFor="password" className="block text-white mb-2">
               Password
@@ -63,7 +103,7 @@ export const SignupPage = () => {
               required
             />
           </div>
-          
+
           <div>
             <label htmlFor="role" className="block text-white mb-2">
               Role
@@ -81,13 +121,7 @@ export const SignupPage = () => {
               <option value="kitchen">Kitchen</option>
             </select>
           </div>
-          
-          <div className="text-right">
-            <a href="#" className="text-blue-400 hover:text-blue-300 text-sm">
-              Forgot Password?
-            </a>
-          </div>
-          
+
           <button
             type="submit"
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition duration-150"

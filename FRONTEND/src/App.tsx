@@ -8,7 +8,6 @@ import { KitchenPage } from "./Pages/KitchenPage"
 import { AuthProvider } from "./hooks/Authcontext"
 import {LandingPage} from "./Pages/LandingPage"
 import { SignupPage } from "./Pages/SignupPage"
-// import { Workers } from "./components/Workers"
 
 function App() {
 
@@ -28,14 +27,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* <Route
-              path="/admin/Workers"
-              element={
-                <ProtectedRoute role={Role.ADMIN}>
-                  <Workers />
-                </ProtectedRoute>
-              }
-            /> */}
             <Route
               path="/waiter"
               element={
