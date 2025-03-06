@@ -1,6 +1,5 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
-import { BACKEND_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/Authcontext';
 
@@ -19,7 +18,7 @@ export default function LoginPage() {
     const Login = async (e: FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/v1/user/login`, { email, password });
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`, { email, password });
             if (response.status === 200) {
                 const userRole = response.data.ROLE as Role;
                 const token = response.data.JWT;

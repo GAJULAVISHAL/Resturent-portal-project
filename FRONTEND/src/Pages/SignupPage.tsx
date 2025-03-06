@@ -1,6 +1,5 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
-import { BACKEND_URL } from '../config';
 import { useAuth } from '../hooks/Authcontext';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,7 +29,7 @@ export const SignupPage = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/v1/user/signup`, formData)
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/signup`, formData)
       if (response.status == 200) {
         const userRole = response.data.ROLE as Role;
         const token = response.data.JWT;

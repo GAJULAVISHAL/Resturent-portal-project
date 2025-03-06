@@ -4,7 +4,6 @@ import { WaiterLoading } from "./Loading"
 import { useState, useEffect } from "react"
 import { ClearOrder, PlaceOrder } from "./WaiterButtons"
 import axios from "axios"
-import { BACKEND_URL } from "../config"
 
 interface Item {
   id: number,
@@ -92,7 +91,7 @@ export const WaiterBody = () => {
     }
 
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/v1/order/placeOrder`, {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/order/placeOrder`, {
         tableNumber,
         items: selectedItems.map(item => ({
           menuItemId: item.id,
