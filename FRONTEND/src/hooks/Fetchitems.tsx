@@ -1,6 +1,5 @@
 import axios from "axios"
 import { useEffect, useState } from "react"
-import { BACKEND_URL } from "../config"
 
 export interface item{
     id : number,
@@ -16,7 +15,7 @@ export const useItems = () => {
     const [items, setItems] = useState<item[]>([])
 
     useEffect(()=>{
-        axios.get(`${BACKEND_URL}/api/v1/menu/get`,{
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/menu/get`,{
             headers:{
                 Authorization: localStorage.getItem('token')
             }

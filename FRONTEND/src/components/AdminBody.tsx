@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useItems } from '../hooks/Fetchitems';
 import { Items } from './Items';
 import axios from 'axios';
-import { BACKEND_URL } from '../config';
 import { AdminLoading } from './Loading';
 import { AddImageIcon } from './Icons';
 
@@ -41,7 +40,7 @@ const AdminBody: React.FC = () => {
       );
 
       // API call to update
-      await axios.put(`${BACKEND_URL}/api/v1/menu/updateItem`, { id, name, price }, {
+      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/menu/updateItem`, { id, name, price }, {
         headers: {
           Authorization: localStorage.getItem('token')
         }
@@ -59,7 +58,7 @@ const AdminBody: React.FC = () => {
       setItems(prevItems => prevItems.filter(item => item.id !== id));
 
       // API call to delete
-      await axios.delete(`${BACKEND_URL}/api/v1/menu/deleteItem/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/menu/deleteItem/${id}`, {
         headers: {
           Authorization: localStorage.getItem("token")
         }
@@ -91,7 +90,7 @@ const AdminBody: React.FC = () => {
       setItems(prevItems => [...prevItems, newItem]);
 
       // API call to add item
-      const response = await axios.post(`${BACKEND_URL}/api/v1/menu/addItem`, formData, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/menu/addItem`, formData, {
         headers: {
           Authorization: localStorage.getItem("token") || ""
         }
@@ -133,12 +132,12 @@ const AdminBody: React.FC = () => {
     setImageUpload(true)
     const data = new FormData()
     data.append('file', file)
-    data.append('upload_preset', 'ml_default')
-    data.append('cloud_name', 'duqbf6np3')
+    data.append('upload_preset', `${import.meta.env.VITE_CLOUDINARY_PRESET}`)
+    data.append('cloud_name', `${import.meta.env.VITE_CLOUDINARY_NAME}`)
 
     try {
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/duqbf6np3/image/upload`,
+        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_NAME}/image/upload`,
         data
       );
       const url = response.data.url;
