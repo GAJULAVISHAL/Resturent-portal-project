@@ -8,62 +8,86 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String   // Hashed password
-  role     Role     @default(CUSTOMER) // Enum for roles
-  createdAt DateTime @default(now())
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String
+  role       Role
+  createdAt  DateTime  @default(now())
+  
+  // For ADMIN users: a unique admin code that must be provided.
+  // For non-admin users, this field is null.
+  adminCode  String?   @unique
+
+  // For non-admin users: the admin they belong to.
+  adminId    Int?
+  admin      User?     @relation("AdminStaff", fields: [adminId], references: [id])
+  
+  // For admin users: all staff members attached to them.
+  staff      User[]    @relation("AdminStaff")
+  
+  // If applicable: Orders placed by the user (e.g., if they are waiters).
+  orders     Orders[]
+  
+  // For ADMIN users: all menu items they own.
+  menuItems  MenuItems[]
 }
 
-model MenuItem {
-  id          Int       @id @default(autoincrement())
-  name        String?
+model MenuItems {
+  id          Int         @id @default(autoincrement())
+  name        String
   price       Int
   imageUrl    String?
-  category    Category  
-  isAvailable Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  orderItems  OrderItem[] // One-to-many relationship with OrderItem
+  isAvailable Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  
+  // Category assigned to the menu item.
+  category    Category
+  
+  // Relation: Menu item is linked to an admin user.
+  adminId     Int
+  admin       User        @relation(fields: [adminId], references: [id])
+  
+  // Relation: A menu item can appear in many order items.
+  orderItems  OrderItems[]
 }
 
-model Order {
-  id         Int          @id @default(autoincrement())
-  table_number Int
-  status     OrderStatus   @default(PENDING) // Enum for order status
-  items      OrderItem[]   // One-to-many relationship with OrderItem, representing the items associated with an order
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+model Orders {
+  id           Int         @id @default(autoincrement())
+  tableNumber  Int
+  createdAt    DateTime    @default(now())
+  
+  // Relation: Waiter who took the order (if applicable).
+  waiterId     Int?
+  waiter       User?       @relation(fields: [waiterId], references: [id])
+  
+  // Relation: All order items belonging to this order.
+  items        OrderItems[]
 }
 
-model OrderItem {
-  id         Int       @id @default(autoincrement())
-  order_id    Int
-  order       Order     @relation(fields: [order_id], references: [id]) // Define relation to Order
-  menu_item_id Int
-  menuItem     MenuItem  @relation(fields: [menu_item_id], references: [id]) // Define relation to MenuItem
-  quantity   Int       @default(1)
+model OrderItems {
+  id           Int         @id @default(autoincrement())
+  quantity     Int
+  
+  // Relation: Menu item ordered.
+  menuItemId   Int
+  menuItem     MenuItems   @relation(fields: [menuItemId], references: [id])
+  
+  // Relation: Order to which this item belongs.
+  orderId      Int
+  order        Orders      @relation(fields: [orderId], references: [id])
 }
 
 enum Role {
   ADMIN
   WAITER
   KITCHEN
-  CUSTOMER
-}
-
-enum OrderStatus {
-  PENDING
-  IN_PROGRESS
-  READY
-  SERVED
 }
 
 enum Category {

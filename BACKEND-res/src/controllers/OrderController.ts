@@ -14,29 +14,27 @@ export async function PlaceOrder(c: Context) {
         }).$extends(withAccelerate())
 
         const body: PlaceOrderRequest = await c.req.json()
-        const { tableNumber, items } = body
+        const {     tableNumber, items } = body
 
         if (!tableNumber || !items || items.length === 0) {
             return c.json({ message: "Invalid input data" }, 400);
         }
 
-        const order = await prisma.order.create({
+        const order = await prisma.orders.create({
             data: {
-                table_number: tableNumber,
-                status: 'PENDING', // Default status for a new order
+                tableNumber : tableNumber,
                 items: {
-                    create: items.map((item) => ({
-                        menu_item_id: item.menuItemId,
-                        quantity: item.quantity,
-                    })),
-                },
+                    create: items.map(item => ({
+                        menuItemId: item.menuItemId,
+                        quantity: item.quantity
+                    }))
+                }
             },
             include: {
                 items: true, // Include associated order items in the response
             },
         });
-
-        console.log("Ordes sent to kitcken", order)
+        
         return c.json({
             message: "Order Placed",
             order
