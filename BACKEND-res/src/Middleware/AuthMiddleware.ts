@@ -17,7 +17,7 @@ export async function AuthMiddleware(c: Context, next: Next) {
                 msg: 'Invalid Token'
             });
         }
-        c.set('user', payload);
+        c.set('userid', payload.id); 
         await next();
         return c.res; // Ensure to return the response object
     } catch (e) {
