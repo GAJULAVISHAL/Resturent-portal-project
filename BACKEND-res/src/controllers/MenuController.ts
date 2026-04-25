@@ -8,15 +8,17 @@ export async function AddItem(c: Context) {
             datasourceUrl: c.env.DATABASE_URL
         }).$extends(withAccelerate());
 
-        const adminId = Number(c.get("userid"));
+        const payload = c.get('payload');
+        const adminId = Number(payload.id);
+        
         if (isNaN(adminId)) {
             return c.json({ error: "Invalid admin ID." }, 400);
         }
 
-        const { name, price, imageUrl, category, isAvailable } = await c.req.json();
+        const { name, price, imageUrl, categoryId } = await c.req.json();
 
         // Basic validation (optional but recommended)
-        if (!name || !price || !imageUrl || !category ||!isAvailable) {
+        if (!name || !price || !imageUrl || !categoryId) {
             return c.json({ error: "Missing required fields." }, 400);
         }
 
@@ -25,8 +27,7 @@ export async function AddItem(c: Context) {
                 name,
                 price,
                 imageUrl,
-                category,
-                isAvailable,
+                categoryId: Number(categoryId),
                 adminId,
             },
         });
@@ -52,6 +53,7 @@ export async function UpdateItem(c: Context) {
                 name: body.name,
                 price: body.price,
                 category: body.category,
+                isAvailable: body.isAvailable,
             }
         })
         return c.json({
@@ -94,25 +96,120 @@ export async function GetMenu(c: Context) {
         const prisma = new PrismaClient({
             datasourceUrl: c.env.DATABASE_URL
         }).$extends(withAccelerate())
+
+        const payload = c.get('payload');
+        
+        const availableParam = c.req.query('available');
+        
+        let adminId: number;
+        if (payload.role === 'ADMIN'){
+            adminId = Number(payload.id);
+        } else {
+            adminId = Number(payload.adminId);
+        }
+
+        // Build the 'where' object dynamically so that we can conditionally add filters
+        const whereClause: any = {
+            adminId: adminId
+        };
+
+        // If the query param exists and is true add the filter
+        if (availableParam === 'true') {
+            whereClause.isAvailable = true;
+        }
+
         const items = await prisma.menuItems.findMany({
+            where: whereClause, 
+            select: {
+                id: true,
+                name: true,
+                price: true,
+                category: true,
+                imageUrl: true,
+                isAvailable: true 
+            },
+            orderBy: {
+                name: 'asc' 
+            }
+        })
+
+        return c.json({
+            items
+        }, 200)
+
+    } catch (e) {
+        return c.json({
+            msg: 'Error fetching menu items',
+            error: e
+        }, 400)
+    }
+}
+
+export async function GetSpecificMenu(c: Context) {
+    try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL
+        }).$extends(withAccelerate())
+        const payload = c.get('payload');
+        const adminId = Number(payload.adminId);
+        const Availableitems = await prisma.menuItems.findMany({
             where:{
-                adminId: Number(c.get("userid"))
+                adminId: adminId,
+                isAvailable: true
             },
             select: {
                 id: true,
                 name: true,
                 price: true,
                 category: true,
-                imageUrl: true  
+                imageUrl: true,
+                isAvailable: true 
             }
         })
+
         return c.json({
-            items
-        })
-    } catch (e) {
+            Availableitems
+        },200)
+    }catch(e){
         return c.json({
-            msg: 'Error fetching menu items',
+            msg :"Error Fetching Available Menu Items",
             error: e
         },400)
+    }
+}
+
+export async function UploadImage(c: Context) {
+    try {
+        const formData = await c.req.formData();
+        const file = formData.get('file');
+
+        if (!file) {
+            return c.json({ error: 'No file provided' }, 400);
+        }
+
+        // We assume CLOUDINARY_NAME and CLOUDINARY_PRESET are set in wrangler.toml or .env
+        const cloudinaryName = c.env.CLOUDINARY_NAME ;
+        const cloudinaryPreset = c.env.CLOUDINARY_PRESET ;
+
+        const cloudinaryData = new FormData();
+        cloudinaryData.append('file', file);
+        cloudinaryData.append('upload_preset', cloudinaryPreset);
+        cloudinaryData.append('cloud_name', cloudinaryName);
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryName}/image/upload`, {
+            method: 'POST',
+            body: cloudinaryData,
+        });
+
+        const result: any = await response.json();
+
+        if (!response.ok) {
+            return c.json({ error: 'Failed to upload image to Cloudinary', details: result }, 500);
+        }
+
+        return c.json({ secure_url: result.secure_url }, 200);
+    } catch (e) {
+        console.error("Error uploading image:", e);
+        return c.json({ error: 'Error uploading image' }, 500);
     }
 }

@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { WebSocketServer, WebSocket } from 'ws';
 import dotenv from 'dotenv';
+import { parse } from 'cookie'; // ✅ Fixed: Named import
 
 dotenv.config();
 
@@ -19,16 +20,14 @@ interface AuthenticatedWebSocket extends WebSocket {
 const app = express();
 app.use(express.json());
 
-
-const PORT = process.env.PORT || 3000;
+// Use 8080 by default to match the frontend WebSocket URL (ws://localhost:8080)
+const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.SECRETKEY_JWT;
-
 
 if (!JWT_SECRET) {
   console.error("FATAL ERROR: SECRETKEY_JWT is not defined in the environment variables.");
   process.exit(1);
 }
-
 
 const httpServer = app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
@@ -37,20 +36,17 @@ const httpServer = app.listen(PORT, () => {
 
 const wss = new WebSocketServer({ server: httpServer });
 
-
-// Health check: ping/pong to detect broken clients
+// Health check
 setInterval(() => {
   wss.clients.forEach((ws) => {
     const client = ws as AuthenticatedWebSocket;
     if (client.isAlive === false) {
-      console.log(`⚠️ Terminating stale connection`);
       return client.terminate();
     }
     client.isAlive = false;
     client.ping();
   });
 }, 30000);
-
 
 wss.on('connection', function connection(ws: WebSocket, req) {
   const authWs = ws as AuthenticatedWebSocket;
@@ -61,77 +57,62 @@ wss.on('connection', function connection(ws: WebSocket, req) {
   });
 
   try {
-    // 1. Parse token from query string using modern URL
-    const parsedUrl = new URL(req.url ?? '', `http://${req.headers.host}`);
-    const token = parsedUrl.searchParams.get('token');
+    // 1. Get raw cookies
+    const rawCookies = req.headers.cookie;
+
+    // 🔍 DEBUG LOGS: Check your server console when you connect!
+    console.log("------------------------------------------------");
+    console.log("Incoming Cookies:", rawCookies); 
+    
+    if (!rawCookies) {
+      console.error("❌ Error: Browser sent NO cookies. Check 'path' and 'secure' flags in your login route.");
+      throw new Error('No cookies found.');
+    }
+
+    // 2. Parse the cookies into an object
+    const parsedCookies = parse(rawCookies); 
+    
+    // 🔍 DEBUG LOGS: See what names we parsed
+    console.log("Parsed keys:", Object.keys(parsedCookies));
+
+    // 3. Extract the specific token
+    // CHANGE: Use 'accessToken' to match your Hono backend!
+    const token = parsedCookies['accessToken']; 
 
     if (!token) {
-      throw new Error('Authentication failed: No token provided.');
+      console.error(`❌ Error: 'accessToken' cookie is missing. Available cookies: ${Object.keys(parsedCookies).join(', ')}`);
+      throw new Error('Token cookie is missing.');
     }
-    console.log(token)
 
+    // 4. Verify
     const payload = jwt.verify(token, JWT_SECRET) as UserPayload;
-
-    // 2. Validate payload structure
-    if (!payload.id || !payload.role || !payload.adminId) {
-      throw new Error('Authentication failed: Invalid token payload.');
-    }
+    if (!payload.id || !payload.role) throw new Error('Invalid payload');
 
     authWs.user = payload;
+    console.log(`✅ Success: User ${authWs.user.id} connected.`);
 
-    console.log(`✅ Client connected: UserID ${authWs.user.id}, Role ${authWs.user.role}, AdminID ${authWs.user.adminId}`);
-
-    authWs.on('error', console.error);
-
+    // ... Standard message handling ...
     authWs.on('message', function message(data) {
-      // Ignore messages from non-waiters
       if (authWs.user?.role !== 'WAITER') return;
-
-      let orderData;
       try {
-        orderData = JSON.parse(data.toString());
-      } catch (e) {
-        console.error(`❗ Invalid message from ${authWs.user.id}:`, e);
-        authWs.send(JSON.stringify({ type: 'ERROR', message: 'Invalid message format. Expected JSON.' }));
-        return;
-      }
+        const orderData = JSON.parse(data.toString());
+        console.log("Received order data:", orderData);
+        console.log(`📬 Order received from ${authWs.user.id}`);
+        
+        const payloadForKitchen = JSON.stringify({ ...orderData, waiterId: authWs.user.id });
 
-      console.log(`📬 Order from Waiter ${authWs.user.id} (Admin ${authWs.user.adminId}):`, orderData);
-
-      const payloadForKitchen = JSON.stringify({
-        ...orderData,
-        waiterId: authWs.user.id,
-      });
-
-      // Broadcast to relevant KITCHEN clients
-      wss.clients.forEach(function each(client) {
-        const kitchenWs = client as AuthenticatedWebSocket;
-        if (
-          kitchenWs !== authWs &&
-          kitchenWs.readyState === WebSocket.OPEN &&
-          kitchenWs.user?.role === 'KITCHEN' &&
-          kitchenWs.user.adminId === authWs.user?.adminId
-        ) {
-          console.log(`  -> Relaying to Kitchen staff ${kitchenWs.user.id}`);
-          kitchenWs.send(payloadForKitchen);
-        }
-      });
-    });
-
-    authWs.on('close', () => {
-      if (authWs.user) {
-        console.log(`❌ Client disconnected: UserID ${authWs.user.id}`);
-      } else {
-        console.log(`❌ Unauthenticated client disconnected.`);
-      }
+        wss.clients.forEach((client) => {
+          const kitchenWs = client as AuthenticatedWebSocket;
+          if (kitchenWs !== authWs && kitchenWs.readyState === WebSocket.OPEN && kitchenWs.user?.role === 'KITCHEN' && kitchenWs.user.adminId === authWs.user?.adminId) { 
+            kitchenWs.send(payloadForKitchen);
+            console.log('order details', payloadForKitchen);
+          }
+        });
+      } catch (e) { console.error(e); }
     });
 
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Authentication error: ${error.message}`);
-    } else {
-      console.error(`Authentication error: ${String(error)}`);
-    }
-    ws.terminate();
+    console.error(`Authentication failed: ${(error as Error).message}`);
+    ws.close(1008, 'Authentication Failed');
   }
 });

@@ -9,79 +9,127 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
+// Updated Prisma Schema
+
 model User {
-  id         Int       @id @default(autoincrement())
-  name       String
-  email      String    @unique
-  password   String
-  role       Role
-  createdAt  DateTime  @default(now())
-  
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
   // For ADMIN users: a unique admin code that must be provided.
-  // For non-admin users, this field is null.
-  adminCode  String?   @unique
+  adminCode String? @unique
 
   // For non-admin users: the admin they belong to.
-  adminId    Int?
-  admin      User?     @relation("AdminStaff", fields: [adminId], references: [id])
-  
+  adminId Int?
+  admin   User? @relation("AdminStaff", fields: [adminId], references: [id])
+
   // For admin users: all staff members attached to them.
-  staff      User[]    @relation("AdminStaff")
-  
-  // If applicable: Orders placed by the user (e.g., if they are waiters).
-  orders     Orders[]
-  
+  staff User[] @relation("AdminStaff")
+
+  // For ADMIN users: all custom categories they own.
+  categories Category[]
+
   // For ADMIN users: all menu items they own.
-  menuItems  MenuItems[]
+  menuItems MenuItems[]
+
+  // If applicable: Orders placed by the user.
+  // If applicable: Orders placed by the user.
+  orders Orders[]
+
+  // For ADMIN users: tables they manage.
+  tables Table[]
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  // Relation: A category belongs to one admin user.
+  adminId Int
+  admin   User @relation(fields: [adminId], references: [id])
+
+  // Relation: A category can have many menu items.
+  menuItems MenuItems[]
+
+  // An admin cannot have two categories with the same name.
+  @@unique([name, adminId])
 }
 
 model MenuItems {
-  id          Int         @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   price       Int
   imageUrl    String?
-  isAvailable Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  
-  // Category assigned to the menu item.
-  category    Category
-  
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relation: Menu item is assigned a category.
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
   // Relation: Menu item is linked to an admin user.
-  adminId     Int
-  admin       User        @relation(fields: [adminId], references: [id])
-  
+  adminId Int
+  admin   User @relation(fields: [adminId], references: [id])
+
   // Relation: A menu item can appear in many order items.
-  orderItems  OrderItems[]
+  orderItems OrderItems[]
+}
+
+model Table {
+  id       Int         @id @default(autoincrement())
+  number   Int
+  capacity Int         @default(4)
+  status   TableStatus @default(AVAILABLE)
+  adminId  Int
+  admin    User        @relation(fields: [adminId], references: [id])
+  orders   Orders[]
+
+  @@unique([number, adminId]) // Ensure table numbers are unique per restaurant
 }
 
 model Orders {
-  id           Int         @id @default(autoincrement())
-  tableNumber  Int
-  createdAt    DateTime    @default(now())
-  
+  id        Int      @id @default(autoincrement())
+  tableId   Int
+  table     Table    @relation(fields: [tableId], references: [id])
+  createdAt DateTime @default(now())
+
+  status     OrderStatus @default(NEW) // e.g., PENDING, IN_PROGRESS, COMPLETED
+  totalPrice Int
   // Relation: Waiter who took the order (if applicable).
-  waiterId     Int?
-  waiter       User?       @relation(fields: [waiterId], references: [id])
-  
+  waiterId   Int?
+  waiter     User?       @relation(fields: [waiterId], references: [id])
+
   // Relation: All order items belonging to this order.
-  items        OrderItems[]
+  items OrderItems[]
 }
 
 model OrderItems {
-  id           Int         @id @default(autoincrement())
-  quantity     Int
-  
+  id         Int       @id @default(autoincrement())
+  quantity   Int
+  // NEW: The "Snapshot" Field. 
+  // Stores the price of the single item *at the moment it was ordered*.
+  // Even if MenuItems.price changes later, this value remains fixed.
+  price      Int
   // Relation: Menu item ordered.
-  menuItemId   Int
-  menuItem     MenuItems   @relation(fields: [menuItemId], references: [id])
-  
+  menuItemId Int
+  menuItem   MenuItems @relation(fields: [menuItemId], references: [id])
+
   // Relation: Order to which this item belongs.
-  orderId      Int
-  order        Orders      @relation(fields: [orderId], references: [id])
+  orderId Int
+  order   Orders @relation(fields: [orderId], references: [id])
 }
 
 enum Role {
@@ -90,15 +138,8 @@ enum Role {
   KITCHEN
 }
 
-enum Category {
-  JUICE
-  MILKSHAKE
-  SMOOTHIE
-  SALAD
-  SHARJAH
-  LASSI
-  MOJITO
-  FALOODA
-  CHAAT
-  FRIES
+enum OrderStatus {
+  NEW
+  COMPLETED
+  CANCELLED
 }
