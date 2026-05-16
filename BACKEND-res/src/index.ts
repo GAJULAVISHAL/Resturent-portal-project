@@ -27,7 +27,6 @@ app.use('*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }))
-// app.options('*', cors());
 app.route('/user',UserRouter)
 app.route('/menu',MenuRouter)
 app.route('/order',OrderRouter)
