@@ -1,6 +1,7 @@
 import { Context } from "hono";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import { menuHasher } from "../utils/hash";
 
 export async function getDashboardStats(c: Context) {
     const prisma = new PrismaClient({
@@ -247,4 +248,22 @@ export async function getTrendingItems(c: Context) {
         console.error(e);
         return c.json({ msg: "Something went wrong" }, 500);
     }
+}
+
+export async function getQrLink(c: Context) {
+    const prisma = new PrismaClient({
+        datasourceUrl: c.env.DATABASE_URL,
+    }).$extends(withAccelerate());
+
+    const payload = c.get("payload");
+    if (payload.role !== "ADMIN") {
+        return c.json({ msg: "UnAuthorized" }, 401)
+    }
+    
+    const encodedId = menuHasher.encode([payload.id]);
+    
+
+    const restaurantUrl = c.env.NODE_ENV === "production" ? c.env.FRONTEND_URL : "http://localhost:5173";
+    const qrLink = `${restaurantUrl}/publicMenu/?id=${encodedId}`;
+    return c.json({ qrLink });
 }

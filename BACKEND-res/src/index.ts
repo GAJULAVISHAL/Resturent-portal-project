@@ -6,6 +6,7 @@ import { OrderRouter } from './routers/OrderRouter'
 import { CategoryRouter } from './routers/CategoryRouter'
 import { AdminRouter } from './routers/AdminRouter'
 import { tableRouter } from './routers/TableRouter'
+import { openRouter } from './routers/OpenRouter'
 
 const app = new Hono().basePath('/api/v1')
 

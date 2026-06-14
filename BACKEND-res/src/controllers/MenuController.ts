@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
+import { menuHasher } from '../utils/hash';
 
 export async function AddItem(c: Context) {
     try {
@@ -145,13 +146,15 @@ export async function GetMenu(c: Context) {
     }
 }
 
-export async function GetSpecificMenu(c: Context) {
+export async function GetPublicMenu(c: Context) {
     try{
         const prisma = new PrismaClient({
             datasourceUrl: c.env.DATABASE_URL
         }).$extends(withAccelerate())
-        const payload = c.get('payload');
-        const adminId = Number(payload.adminId);
+        const id = c.req.query('id')
+        console.log("Received ID for public menu:", id);
+        const adminId = menuHasher.decode(id || "")[0]
+        
         const Availableitems = await prisma.menuItems.findMany({
             where:{
                 adminId: adminId,
