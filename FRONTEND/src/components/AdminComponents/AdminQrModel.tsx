@@ -2,18 +2,20 @@ import { MdClose } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "../../apiClient";
 import { useRef, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
 import { useToast } from "../../context/ToastContext";
+import AdminQrFrameSvg from "./AdminQrFrameSvg";
 
 interface AdminQrModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
+const PNG_EXPORT_SIZE = 1000;
+
 const AdminQrModel = ({ isOpen, onClose }: AdminQrModalProps) => {
     const [qrLink, setQrLink] = useState<string>("");
     const qrCodeRef = useRef<HTMLDivElement>(null);
-    const {showToast} = useToast();
+    const { showToast } = useToast();
     const handleGenerate = async () => {
         const response = await apiClient.get("/api/v1/admin/QrLink");
         setQrLink(response.data.qrLink);
@@ -36,17 +38,86 @@ const AdminQrModel = ({ isOpen, onClose }: AdminQrModalProps) => {
         const clonedSvg = svgElement.cloneNode(true) as SVGElement;
         clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
-        const serializedSvg = new XMLSerializer().serializeToString(clonedSvg);
-        const blob = new Blob([serializedSvg], { type: "image/svg+xml;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const originalViewBox = clonedSvg.getAttribute("viewBox") ?? "0 0 421 428.1";
+        const viewBoxParts = originalViewBox.split(/\s+/).map(Number);
+        const sourceWidth = Number.isFinite(viewBoxParts[2]) ? viewBoxParts[2] : 421;
+        const sourceHeight = Number.isFinite(viewBoxParts[3]) ? viewBoxParts[3] : 428.1;
 
-        link.href = url;
-        link.download = "restaurant-qr-code.svg";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        clonedSvg.removeAttribute("width");
+        clonedSvg.removeAttribute("height");
+        clonedSvg.setAttribute("viewBox", `0 0 ${sourceWidth} ${sourceHeight}`);
+
+        const exportSize = Math.max(sourceWidth, sourceHeight);
+        const centeredX = (exportSize - sourceWidth) / 2;
+        const centeredY = (exportSize - sourceHeight) / 2;
+
+        const exportSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        exportSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        exportSvg.setAttribute("width", "50%");
+        exportSvg.setAttribute("height", "50%");
+        exportSvg.setAttribute("viewBox", `0 0 ${exportSize} ${exportSize}`);
+        exportSvg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        const exportBackground = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        exportBackground.setAttribute("x", "0");
+        exportBackground.setAttribute("y", "0");
+        exportBackground.setAttribute("width", `${exportSize}`);
+        exportBackground.setAttribute("height", `${exportSize}`);
+        exportBackground.setAttribute("fill", "#ffffff");
+
+        clonedSvg.setAttribute("x", `${centeredX}`);
+        clonedSvg.setAttribute("y", `${centeredY}`);
+        clonedSvg.setAttribute("width", `${sourceWidth}`);
+        clonedSvg.setAttribute("height", `${sourceHeight}`);
+
+        exportSvg.appendChild(exportBackground);
+        exportSvg.appendChild(clonedSvg);
+
+        const serializedSvg = new XMLSerializer().serializeToString(exportSvg);
+        const svgBlob = new Blob([serializedSvg], { type: "image/svg+xml;charset=utf-8" });
+        const svgUrl = URL.createObjectURL(svgBlob);
+
+        const image = new Image();
+        image.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = PNG_EXPORT_SIZE;
+            canvas.height = PNG_EXPORT_SIZE;
+
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                URL.revokeObjectURL(svgUrl);
+                showToast("Unable to prepare PNG download.");
+                return;
+            }
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, PNG_EXPORT_SIZE, PNG_EXPORT_SIZE);
+            ctx.drawImage(image, 0, 0, PNG_EXPORT_SIZE, PNG_EXPORT_SIZE);
+            URL.revokeObjectURL(svgUrl);
+
+            canvas.toBlob((pngBlob) => {
+                if (!pngBlob) {
+                    showToast("PNG export failed.");
+                    return;
+                }
+
+                const pngUrl = URL.createObjectURL(pngBlob);
+                const link = document.createElement("a");
+                link.href = pngUrl;
+                link.download = "restaurant-qr-code.png";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(pngUrl);
+            }, "image/png");
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(svgUrl);
+            showToast("Failed to render QR image for PNG download.");
+        };
+
+        image.src = svgUrl;
     };
 
     if (!isOpen) {
@@ -80,29 +151,17 @@ const AdminQrModel = ({ isOpen, onClose }: AdminQrModalProps) => {
                     </button>
 
                     <div className="flex flex-col items-center gap-6 pt-8">
-                        <div ref={qrCodeRef} className="flex h-48 w-48 items-center justify-center rounded-lg border border-black/10 bg-neutral-950 text-center text-white shadow-inner shadow-black/40">
-                            <div className="rounded-lg border border-white/10 bg-neutral-950 p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                                {qrLink ? (
-                                    <QRCodeSVG
-                                        value={qrLink}
-                                        size={200}
-                                        bgColor={"#ffffff"}
-                                        fgColor={"#000000"}
-                                        level={"H"} // High error correction is REQUIRED if you are adding a logo
-                                        imageSettings={{
-                                            src: "https://your-app.com/default-icon.png",
-                                            x: undefined,
-                                            y: undefined,
-                                            height: 42,
-                                            width: 42,
-                                            excavate: true, // Creates a clean white border around the logo
-                                        }}
-                                    />
-                                ) : (
-                                    <span className="text-sm text-white/80">Your QR code will appear here</span>
-                                )}
-
-                            </div>
+                        <div className="h-full">
+                            {qrLink ? (
+                                <div
+                                    ref={qrCodeRef}
+                                    className="flex w-full items-center justify-center rounded-xl border border-black/10 bg-white p-2 shadow-inner"
+                                >
+                                    <AdminQrFrameSvg value={qrLink || undefined} size={300} />
+                                </div>
+                            ) : (
+                                <p className="text-neutral-500">No QR code generated.</p>
+                            )}
                         </div>
 
                         <div className="flex w-full gap-3">

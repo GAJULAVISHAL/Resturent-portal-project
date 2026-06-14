@@ -1,20 +1,15 @@
-import { FormEvent, useState, useEffect } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/Authcontext';
-
-export enum Role {
-    ADMIN = "ADMIN",
-    WAITER = "WAITER",
-    KITCHEN = "KITCHEN"
-}
+import { Role } from '../types';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { login } = useAuth();
+    const { login, isAuthenticated, userRole, verifySession } = useAuth();
     const navigate = useNavigate();
     const [pageReady, setPageReady] = useState(false);
 
@@ -24,6 +19,44 @@ export default function LoginPage() {
         img.onload = () => setPageReady(true);
         img.onerror = () => setPageReady(true);
     }, []);
+
+    useEffect(() => {
+        let active = true;
+
+        const runSessionCheck = async () => {
+            if (isAuthenticated && userRole) {
+                if (userRole === Role.ADMIN) {
+                    navigate('/admin', { replace: true });
+                } else if (userRole === Role.WAITER) {
+                    navigate('/waiter', { replace: true });
+                } else if (userRole === Role.KITCHEN) {
+                    navigate('/kitchen', { replace: true });
+                }
+
+                return;
+            }
+
+            const role = await verifySession();
+
+            if (!active || !role) {
+                return;
+            }
+
+            if (role === Role.ADMIN) {
+                navigate('/admin', { replace: true });
+            } else if (role === Role.WAITER) {
+                navigate('/waiter', { replace: true });
+            } else if (role === Role.KITCHEN) {
+                navigate('/kitchen', { replace: true });
+            }
+        };
+
+        void runSessionCheck();
+
+        return () => {
+            active = false;
+        };
+    }, [isAuthenticated, navigate, userRole, verifySession]);
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();

@@ -119,11 +119,11 @@ const AdminMenu = ({
     activeTab === "All"
       ? items
       : items.filter(
-          (item) =>
-            (typeof item.category === "string"
-              ? item.category
-              : item.category.name) === activeTab,
-        );
+        (item) =>
+          (typeof item.category === "string"
+            ? item.category
+            : item.category.name) === activeTab,
+      );
 
   return (
     <div>
@@ -141,11 +141,10 @@ const AdminMenu = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as string)}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap md:w-full md:text-left ${
-                  activeTab === tab
-                    ? "bg-indigo-100 text-indigo-700 font-semibold"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap md:w-full md:text-left ${activeTab === tab
+                  ? "bg-indigo-100 text-indigo-700 font-semibold"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`}
               >
                 {tab}
               </button>

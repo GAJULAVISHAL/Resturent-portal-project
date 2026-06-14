@@ -1,13 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios"; // You'll need axios here
+import React, { createContext, useCallback, useContext, useState } from "react";
+import axios from "axios";
 import { Role } from "../types";
+
+let cachedSessionRole: Role | null | undefined;
+let cachedSessionChecked = false;
 
 interface AuthContextProps {
     userRole: Role | null;
-    isAuthenticated: boolean; // Use boolean, not Boolean
-    loading: boolean; // Expose loading state to consumers
+    isAuthenticated: boolean;
+    authChecked: boolean;
+    loading: boolean;
     login: (role: Role) => void;
-    logout: () => Promise<void>; // Logout is now an async operation
+    logout: () => Promise<void>;
+    verifySession: () => Promise<Role | null>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -15,42 +20,66 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [userRole, setUserRole] = useState<Role | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(true); // Start in a loading state
+    const [authChecked, setAuthChecked] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
-    useEffect(() => {
-        // This function will run on initial app load to check if a valid
-        // session cookie exists.
-        const verifyAuth = async () => {
-            try {
-                // You need an endpoint that verifies the cookie and returns user info.
-                // This endpoint must be protected by your AuthMiddleware.
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/profile`, {
-                    withCredentials: true,
-                });
-
-                // If the request succeeds, the user is authenticated.
-                if (response.data && response.data.user) {
-                    setUserRole(response.data.user.role as Role);
-                    setIsAuthenticated(true);
-                }
-            } catch (error) {
-                // Any error (e.g., 401 Unauthorized) means the user is not logged in.
+    const verifySession = useCallback(async () => {
+        if (cachedSessionChecked) {
+            if (cachedSessionRole) {
+                setUserRole(cachedSessionRole);
+                setIsAuthenticated(true);
+            } else {
                 setUserRole(null);
                 setIsAuthenticated(false);
-            } finally {
-                // Stop loading once the check is complete.
-                setLoading(false);
             }
-        };
 
-        verifyAuth();
-    }, []); // The empty array ensures this runs only once.
+            setAuthChecked(true);
+            return cachedSessionRole ?? null;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/profile`, {
+                withCredentials: true,
+            });
+
+            if (response.data?.user) {
+                const role = response.data.user.role as Role;
+                cachedSessionRole = role;
+                cachedSessionChecked = true;
+                setUserRole(role);
+                setIsAuthenticated(true);
+                setAuthChecked(true);
+                return role;
+            }
+
+            cachedSessionRole = null;
+            cachedSessionChecked = true;
+            setUserRole(null);
+            setIsAuthenticated(false);
+            setAuthChecked(true);
+            return null;
+        } catch (error) {
+            cachedSessionRole = null;
+            cachedSessionChecked = true;
+            setUserRole(null);
+            setIsAuthenticated(false);
+            setAuthChecked(true);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // This function can be called from your login page *after* the
     // login API call has succeeded and set the cookie.
     const login = (role: Role) => {
+        cachedSessionRole = role;
+        cachedSessionChecked = true;
         setUserRole(role);
         setIsAuthenticated(true);
+        setAuthChecked(true);
     };
 
     // Logout must now call a backend endpoint to clear the HttpOnly cookie.
@@ -63,19 +92,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error("Logout failed on the server:", error);
         } finally {
-            // Always clear the state on the client-side.
+            cachedSessionRole = null;
+            cachedSessionChecked = false;
             setUserRole(null);
             setIsAuthenticated(false);
+            setAuthChecked(true);
         }
     };
 
-    // Show a loading indicator while we verify the user's session.
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
     return (
-        <AuthContext.Provider value={{ userRole, isAuthenticated, loading, login, logout }}>
+        <AuthContext.Provider value={{ userRole, isAuthenticated, authChecked, loading, login, logout, verifySession }}>
             {children}
         </AuthContext.Provider>
     );

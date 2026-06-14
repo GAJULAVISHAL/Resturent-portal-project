@@ -8,6 +8,9 @@ import { ToastProvider } from "./context/ToastContext";
 
 // Lazy Load Pages
 const LoginPage = lazy(() => import("./Pages/LoginPage"));
+const PublicMenuPage = lazy(() =>
+  import("./Pages/PublicMenuPage").then((module) => ({ default: module.PublicMenuPage })),
+);
 const AdminPage = lazy(() =>
   import("./Pages/AdminPage").then((module) => ({ default: module.AdminPage })),
 );
@@ -43,6 +46,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/publicMenu" element={<PublicMenuPage />} />
                 <Route
                   path="/admin"
                   element={

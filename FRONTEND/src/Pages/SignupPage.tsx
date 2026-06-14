@@ -6,7 +6,7 @@ import { Role } from '../types';
 import { AdminCodeModal } from '../components/AdminCode';
 
 export const SignupPage = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated, userRole, verifySession } = useAuth();
   const navigate = useNavigate();
   const [pageReady, setPageReady] = useState(false);
 
@@ -16,6 +16,44 @@ export const SignupPage = () => {
     img.onload = () => setPageReady(true);
     img.onerror = () => setPageReady(true);
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const runSessionCheck = async () => {
+      if (isAuthenticated && userRole) {
+        if (userRole === Role.ADMIN) {
+          navigate('/admin', { replace: true });
+        } else if (userRole === Role.WAITER) {
+          navigate('/waiter', { replace: true });
+        } else if (userRole === Role.KITCHEN) {
+          navigate('/kitchen', { replace: true });
+        }
+
+        return;
+      }
+
+      const role = await verifySession();
+
+      if (!active || !role) {
+        return;
+      }
+
+      if (role === Role.ADMIN) {
+        navigate('/admin', { replace: true });
+      } else if (role === Role.WAITER) {
+        navigate('/waiter', { replace: true });
+      } else if (role === Role.KITCHEN) {
+        navigate('/kitchen', { replace: true });
+      }
+    };
+
+    void runSessionCheck();
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, navigate, userRole, verifySession]);
 
   // State for the form
   const [formData, setFormData] = useState({
